@@ -1453,6 +1453,38 @@ public class PersistentResourceTest extends PersistentResource {
         Assert.assertNull(userModel.getNoShare());
     }
 
+    @Test
+    public void testSuccessfulUpdateWithChangeSpec() {
+        FunWithPermissions fun = new FunWithPermissions();
+        fun.setId(1);
+
+        DataStoreTransaction tx = mock(DataStoreTransaction.class);
+        User badUser = new User(-1);
+
+        RequestScope badScope = new RequestScope(null, tx, badUser, dictionary, null, MOCK_LOGGER);
+
+        PersistentResource<FunWithPermissions> funResource = new PersistentResource<>(fun, null, "1", badScope);
+        funResource.updateAttribute("field9", "I am a valid value!");
+        // Updates will defer and wait for the end!
+        funResource.getRequestScope().getPermissionManager().executeCommitChecks();
+    }
+
+    @Test(expectedExceptions = {ForbiddenAccessException.class})
+    public void testFailedUpdateWithChangeSpec() {
+        FunWithPermissions fun = new FunWithPermissions();
+        fun.setId(1);
+
+        DataStoreTransaction tx = mock(DataStoreTransaction.class);
+        User badUser = new User(-1);
+
+        RequestScope badScope = new RequestScope(null, tx, badUser, dictionary, null, MOCK_LOGGER);
+
+        PersistentResource<FunWithPermissions> funResource = new PersistentResource<>(fun, null, "1", badScope);
+        funResource.updateAttribute("field9", "forbiddenWord");
+        // Updates will defer and wait for the end!
+        funResource.getRequestScope().getPermissionManager().executeCommitChecks();
+    }
+
     private RequestScope getUserScope(User user, Logger logger) {
         return new RequestScope(new JsonApiDocument(), null, user, dictionary, null, logger);
     }

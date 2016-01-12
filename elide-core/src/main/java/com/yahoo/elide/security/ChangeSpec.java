@@ -16,6 +16,6 @@ import lombok.Getter;
 public class ChangeSpec {
     @Getter private final PersistentResource resource;
     @Getter private final String fieldName;
-    @Getter private final Object original;
-    @Getter private final Object modified;
+    @Getter private final Object added;
+    @Getter private final Object removed;
 }

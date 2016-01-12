@@ -11,7 +11,10 @@ import com.yahoo.elide.annotation.DeletePermission;
 import com.yahoo.elide.annotation.Include;
 import com.yahoo.elide.annotation.ReadPermission;
 import com.yahoo.elide.annotation.UpdatePermission;
+import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.security.Access;
+import com.yahoo.elide.security.ChangeSpec;
+import com.yahoo.elide.security.OperationCheck;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -22,6 +25,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.Optional;
 import java.util.Set;
 
 @CreatePermission(any = { Access.ALL.class })
@@ -124,4 +128,19 @@ public class FunWithPermissions {
     /* Verifies a chain of checks where all can fail or the last can succeed. */
     @ReadPermission(any = { Access.NONE.class, NegativeIntegerUserCheck.class })
     public String field8;
+
+    /* Check relying on a certain added value in change spec */
+    @UpdatePermission(all = {FailOnForbiddenWord.class})
+    public String field9;
+
+    public static class FailOnForbiddenWord implements OperationCheck<FunWithPermissions> {
+        @Override
+        public boolean ok(FunWithPermissions object, RequestScope requestScope, Optional<ChangeSpec> changeSpec) {
+            if (changeSpec.isPresent()) {
+                ChangeSpec spec = changeSpec.get();
+                return !"forbiddenWord".equals(spec.getAdded());
+            }
+            return true;
+        }
+    }
 }
