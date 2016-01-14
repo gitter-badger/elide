@@ -25,6 +25,9 @@ public class SpecificFieldExpression implements Expression {
     @Override
     public ExpressionResult evaluate() {
         if (!fieldExpression.isPresent()) {
+            if (entityExpression instanceof NoopExpression) {
+                return ExpressionResult.PASS;
+            }
             return entityExpression.evaluate();
         }
         return fieldExpression.get().evaluate();

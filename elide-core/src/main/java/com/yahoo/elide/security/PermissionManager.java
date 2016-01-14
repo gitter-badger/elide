@@ -137,35 +137,6 @@ public class PermissionManager {
                                                        PersistentResource resource,
                                                        ChangeSpec changeSpec) {
         executor.checkAnyFieldPermission(resource, annotationClass, changeSpec);
-//        A annotation = resource.getDictionary().getAnnotation(resource, annotationClass);
-//
-//        if (annotation == null) {
-//            return;
-//        }
-//
-//        PermissionManager.ExtractedChecks extracted = PermissionManager.extractChecks(annotationClass, annotation);
-//        CheckMode mode = extracted.getCheckMode();
-//        Class<OperationCheck>[] opChecks = extracted.getOperationChecks();
-//        Class<CommitCheck>[] comChecks = extracted.getCommitChecks();
-//
-//        boolean isUpdate = UpdatePermission.class.isAssignableFrom(annotationClass);
-//
-//        try {
-//            runPermissionChecks(opChecks, mode, resource, changeSpec, isUpdate);
-//        } catch (ForbiddenAccessException e) {
-//            if (mode == CheckMode.ALL || comChecks.length < 1) {
-//                log.debug("Forbidden access at entity-level.");
-//                throw e;
-//            }
-//        }
-//
-//        // If that succeeds, queue up our commit checks
-//        if (!isEmptyCheckArray(comChecks)) {
-//            commitChecks.add(() -> {
-//                runPermissionChecks(comChecks, mode, resource, changeSpec, isUpdate);
-//                return null;
-//            });
-//        }
     }
 
     /**
@@ -179,7 +150,7 @@ public class PermissionManager {
     public <A extends Annotation> void checkFieldAwarePermissions(PersistentResource<?> resource,
                                                                   ChangeSpec changeSpec,
                                                                   Class<A> annotationClass) {
-        checkFieldAwarePermissions(resource, changeSpec, annotationClass, null);
+        executor.checkAnyFieldPermission(resource, annotationClass, changeSpec);
     }
 
     /**
@@ -196,28 +167,12 @@ public class PermissionManager {
                                                                   Class<A> annotationClass,
                                                                   String field) {
         executor.checkSpecificFieldPermission(resource, annotationClass, field, changeSpec);
-        // Select strategy
-//        final Strategy strategy = (field == null)
-//                                  ? new AnyFieldStrategy(resource, annotationClass, changeSpec)
-//                                  : new SpecificFieldStrategy(resource, field, annotationClass, changeSpec);
-//
-//        // Run checks
-//        strategy.executeOperationChecks();
-//
-//        // Queue up on success
-//        if (strategy.hasCommitChecks()) {
-//            commitChecks.add(() -> {
-//                strategy.executeCommitChecks();
-//                return null;
-//            });
-//        }
     }
 
     /**
      * Execute commmit checks.
      */
     public void executeCommitChecks() {
-        commitChecks.forEach(Supplier::get);
         executor.checkCommitPermissions();
     }
 

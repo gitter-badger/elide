@@ -25,6 +25,6 @@ public class AnyFieldExpression implements Expression {
         if (fieldResult != ExpressionResult.FAIL) {
             return fieldResult;
         }
-        return entityExpression.evaluate();
+        return (entityExpression instanceof NoopExpression) ? ExpressionResult.DEFERRED : entityExpression.evaluate();
     }
 }

@@ -5,6 +5,8 @@
  */
 package com.yahoo.elide.security.permissions;
 
+import com.yahoo.elide.annotation.CreatePermission;
+import com.yahoo.elide.annotation.UpdatePermission;
 import com.yahoo.elide.audit.InvalidSyntaxException;
 import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
@@ -54,12 +56,12 @@ public class PermissionExecutor {
 
         Expression operationExpression =
                 buildFullExpression(extracted.getEntityChecks(), extracted.getFieldChecks(),
-                (check) -> new OperationCheckExpression(check, resource, changeSpec),  SpecificFieldExpression::new);
+                (check) -> new CommitCheckExpression(check, resource, changeSpec),  SpecificFieldExpression::new);
         Expression commitExpression =
-                buildFullExpression(extracted.getEntityCommitChecks(), extracted.getFieldCommitChecks(),
-                (check) -> new CommitCheckExpression(check, resource, changeSpec), SpecificFieldExpression::new);
+                buildFullExpression(extracted.getEntityChecks(), extracted.getFieldChecks(),
+                (check) -> new OperationCheckExpression(check, resource, changeSpec), SpecificFieldExpression::new);
 
-        executeExpressions(operationExpression, commitExpression);
+        executeExpressions(operationExpression, commitExpression, annotationClass);
     }
 
     public <A extends Annotation> void checkAnyFieldPermission(final PersistentResource resource,
@@ -79,28 +81,27 @@ public class PermissionExecutor {
             fields.addAll(rels);
         }
 
-        Expression opExp = new NoopExpression();
-        Expression comExp = new NoopExpression();
+        ExtractedChecks entity = new ExtractedChecks(resource, annotationClass);
+        Expression opExp = buildFullExpression(entity.getEntityChecks(), entity.getFieldChecks(),
+                (check) -> new CommitCheckExpression(check, resource, changeSpec), AnyFieldExpression::new);
+        Expression comExp = buildFullExpression(entity.getEntityChecks(), entity.getFieldChecks(),
+                (check) -> new OperationCheckExpression(check, resource, changeSpec), AnyFieldExpression::new);
         for (String field : fields) {
             ExtractedChecks extracted = new ExtractedChecks(resource, annotationClass, field);
 
             Expression operationExpression =
                     buildFullExpression(extracted.getEntityChecks(), extracted.getFieldChecks(),
-                            (check) -> new OperationCheckExpression(check, resource, changeSpec),
+                            (check) -> new CommitCheckExpression(check, resource, changeSpec),
                             AnyFieldExpression::new);
             Expression commitExpression =
-                    buildFullExpression(extracted.getEntityCommitChecks(), extracted.getFieldCommitChecks(),
-                            (check) -> new CommitCheckExpression(check, resource, changeSpec), AnyFieldExpression::new);
-            if (opExp == null) {
-                opExp = operationExpression;
-                comExp = commitExpression;
-            } else {
-                opExp = new OrExpression(opExp, operationExpression);
-                comExp = new OrExpression(comExp, commitExpression);
-            }
+                    buildFullExpression(extracted.getEntityChecks(), extracted.getFieldChecks(),
+                            (check) -> new OperationCheckExpression(check, resource, changeSpec),
+                            AnyFieldExpression::new);
+            opExp = new OrExpression(opExp, operationExpression);
+            comExp = new OrExpression(comExp, commitExpression);
         }
 
-        executeExpressions(opExp, comExp);
+        executeExpressions(opExp, comExp, annotationClass);
     }
 
     /**
@@ -108,18 +109,27 @@ public class PermissionExecutor {
      */
     public void checkCommitPermissions() {
         commitCheckQueue.forEach((expr) -> {
-            if (expr.evaluate() == FAIL) {
+            if (expr.evaluate() == FAIL && !(expr instanceof NoopExpression)) {
                 throw new ForbiddenAccessException();
             }
         });
     }
 
-    private void executeExpressions(final Expression operationExpressions, final Expression commitExpressions) {
-        ExpressionResult result = operationExpressions.evaluate();
-        if (result == DEFERRED) {
-            commitCheckQueue.add(commitExpressions);
-        } else if (result == FAIL) {
-            throw new ForbiddenAccessException();
+    private <A extends Annotation> void executeExpressions(final Expression operationExpressions,
+                                                           final Expression commitExpressions,
+                                                           final Class<A> annotationClass) {
+        if (UpdatePermission.class.isAssignableFrom(annotationClass)
+                || CreatePermission.class.isAssignableFrom(annotationClass)) {
+            ExpressionResult result = operationExpressions.evaluate();
+            if (result == DEFERRED) {
+                commitCheckQueue.add(commitExpressions);
+            } else if (result == FAIL) {
+                throw new ForbiddenAccessException();
+            }
+        } else {
+            if (commitExpressions.evaluate() == FAIL) {
+                throw new ForbiddenAccessException();
+            }
         }
     }
 
@@ -158,7 +168,7 @@ public class PermissionExecutor {
     }
 
     /**
-     * Convert an array to queue
+     * Convert an array to queue.
      *
      * @param array Array to convert
      * @param <T> Type parameter
