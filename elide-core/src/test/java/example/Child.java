@@ -10,8 +10,8 @@ import com.yahoo.elide.annotation.*;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.security.Access;
 import com.yahoo.elide.security.ChangeSpec;
-import com.yahoo.elide.security.CommitCheck;
-import com.yahoo.elide.security.OperationCheck;
+import com.yahoo.elide.security.checks.CommitCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
 import example.Child.InitCheck;
 
 import javax.persistence.CascadeType;

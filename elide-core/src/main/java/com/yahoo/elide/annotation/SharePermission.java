@@ -5,7 +5,7 @@
  */
 package com.yahoo.elide.annotation;
 
-import com.yahoo.elide.security.OperationCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;

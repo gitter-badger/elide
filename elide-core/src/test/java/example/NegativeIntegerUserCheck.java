@@ -7,7 +7,7 @@ package example;
 
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.optimization.UserCheck;
-import com.yahoo.elide.security.OperationCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
 import com.yahoo.elide.security.User;
 
 import java.util.Optional;

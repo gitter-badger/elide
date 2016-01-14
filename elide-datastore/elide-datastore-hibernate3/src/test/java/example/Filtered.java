@@ -15,7 +15,7 @@ import com.yahoo.elide.datastores.hibernate3.security.CriteriaCheck;
 
 import com.yahoo.elide.security.Access;
 import com.yahoo.elide.security.ChangeSpec;
-import com.yahoo.elide.security.OperationCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
 import example.Filtered.FilterCheck;
 import example.Filtered.FilterCheck3;
 import lombok.ToString;

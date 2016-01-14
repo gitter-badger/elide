@@ -7,7 +7,7 @@ package com.yahoo.elide.datastores.hibernate3.security;
 
 import com.yahoo.elide.core.RequestScope;
 
-import com.yahoo.elide.security.Check;
+import com.yahoo.elide.security.checks.Check;
 import org.hibernate.criterion.Criterion;
 
 /**

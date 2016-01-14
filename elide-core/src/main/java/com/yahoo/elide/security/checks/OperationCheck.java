@@ -3,11 +3,11 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide.security;
+package com.yahoo.elide.security.checks;
 
 /**
  * Operation check interface.
- * @see com.yahoo.elide.security.Check
+ * @see Check
  *
  * Operation checks are run in-line (i.e. as soon as objects are first encountered).
  *

@@ -18,6 +18,10 @@ import com.yahoo.elide.core.SecurityMode;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 
 import com.yahoo.elide.optimization.UserCheck;
+import com.yahoo.elide.security.checks.Check;
+import com.yahoo.elide.security.checks.CommitCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
+import com.yahoo.elide.security.permissions.PermissionExecutor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -38,6 +42,7 @@ public class PermissionManager {
     private final LinkedHashSet<Supplier<Void>> commitChecks = new LinkedHashSet<>();
     private final HashMap<Class<? extends UserCheck>, Boolean> userCheckCache = new HashMap<>();
     private final HashMap<CheckIdentifier, Boolean> resourceCache = new HashMap<>();
+    private final PermissionExecutor executor = new PermissionExecutor();
 
     /**
      * Enum describing check combinators.
@@ -131,35 +136,36 @@ public class PermissionManager {
     public <A extends Annotation> void checkPermission(Class<A> annotationClass,
                                                        PersistentResource resource,
                                                        ChangeSpec changeSpec) {
-        A annotation = resource.getDictionary().getAnnotation(resource, annotationClass);
-
-        if (annotation == null) {
-            return;
-        }
-
-        PermissionManager.ExtractedChecks extracted = PermissionManager.extractChecks(annotationClass, annotation);
-        CheckMode mode = extracted.getCheckMode();
-        Class<OperationCheck>[] opChecks = extracted.getOperationChecks();
-        Class<CommitCheck>[] comChecks = extracted.getCommitChecks();
-
-        boolean isUpdate = UpdatePermission.class.isAssignableFrom(annotationClass);
-
-        try {
-            runPermissionChecks(opChecks, mode, resource, changeSpec, isUpdate);
-        } catch (ForbiddenAccessException e) {
-            if (mode == CheckMode.ALL || comChecks.length < 1) {
-                log.debug("Forbidden access at entity-level.");
-                throw e;
-            }
-        }
-
-        // If that succeeds, queue up our commit checks
-        if (!isEmptyCheckArray(comChecks)) {
-            commitChecks.add(() -> {
-                runPermissionChecks(comChecks, mode, resource, changeSpec, isUpdate);
-                return null;
-            });
-        }
+        executor.checkAnyFieldPermission(resource, annotationClass, changeSpec);
+//        A annotation = resource.getDictionary().getAnnotation(resource, annotationClass);
+//
+//        if (annotation == null) {
+//            return;
+//        }
+//
+//        PermissionManager.ExtractedChecks extracted = PermissionManager.extractChecks(annotationClass, annotation);
+//        CheckMode mode = extracted.getCheckMode();
+//        Class<OperationCheck>[] opChecks = extracted.getOperationChecks();
+//        Class<CommitCheck>[] comChecks = extracted.getCommitChecks();
+//
+//        boolean isUpdate = UpdatePermission.class.isAssignableFrom(annotationClass);
+//
+//        try {
+//            runPermissionChecks(opChecks, mode, resource, changeSpec, isUpdate);
+//        } catch (ForbiddenAccessException e) {
+//            if (mode == CheckMode.ALL || comChecks.length < 1) {
+//                log.debug("Forbidden access at entity-level.");
+//                throw e;
+//            }
+//        }
+//
+//        // If that succeeds, queue up our commit checks
+//        if (!isEmptyCheckArray(comChecks)) {
+//            commitChecks.add(() -> {
+//                runPermissionChecks(comChecks, mode, resource, changeSpec, isUpdate);
+//                return null;
+//            });
+//        }
     }
 
     /**
@@ -189,21 +195,22 @@ public class PermissionManager {
                                                                   ChangeSpec changeSpec,
                                                                   Class<A> annotationClass,
                                                                   String field) {
+        executor.checkSpecificFieldPermission(resource, annotationClass, field, changeSpec);
         // Select strategy
-        final Strategy strategy = (field == null)
-                                  ? new AnyFieldStrategy(resource, annotationClass, changeSpec)
-                                  : new SpecificFieldStrategy(resource, field, annotationClass, changeSpec);
-
-        // Run checks
-        strategy.executeOperationChecks();
-
-        // Queue up on success
-        if (strategy.hasCommitChecks()) {
-            commitChecks.add(() -> {
-                strategy.executeCommitChecks();
-                return null;
-            });
-        }
+//        final Strategy strategy = (field == null)
+//                                  ? new AnyFieldStrategy(resource, annotationClass, changeSpec)
+//                                  : new SpecificFieldStrategy(resource, field, annotationClass, changeSpec);
+//
+//        // Run checks
+//        strategy.executeOperationChecks();
+//
+//        // Queue up on success
+//        if (strategy.hasCommitChecks()) {
+//            commitChecks.add(() -> {
+//                strategy.executeCommitChecks();
+//                return null;
+//            });
+//        }
     }
 
     /**
@@ -211,6 +218,7 @@ public class PermissionManager {
      */
     public void executeCommitChecks() {
         commitChecks.forEach(Supplier::get);
+        executor.checkCommitPermissions();
     }
 
     private void runPermissionChecks(Class<? extends Check>[] checks,
@@ -365,6 +373,13 @@ public class PermissionManager {
             }
             return checksList.toArray(new Class[checksList.size()]);
         }
+    }
+
+    /**
+     * List of checks.
+     */
+    private static final class CheckList {
+        // TODO: Abstract the list of checks associated with mode.
     }
 
     /**

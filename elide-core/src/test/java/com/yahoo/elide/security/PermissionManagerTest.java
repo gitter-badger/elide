@@ -16,6 +16,9 @@ import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 
+import com.yahoo.elide.security.checks.Check;
+import com.yahoo.elide.security.checks.CommitCheck;
+import com.yahoo.elide.security.checks.OperationCheck;
 import example.NegativeIntegerUserCheck;
 import org.testng.Assert;
 import org.testng.annotations.Test;
