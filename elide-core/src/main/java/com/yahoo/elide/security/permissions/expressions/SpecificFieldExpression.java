@@ -7,6 +7,8 @@ package com.yahoo.elide.security.permissions.expressions;
 
 import com.yahoo.elide.security.permissions.ExpressionResult;
 
+import static com.yahoo.elide.security.permissions.ExpressionResult.PASS;
+
 import java.util.Optional;
 
 /**
@@ -18,17 +20,13 @@ public class SpecificFieldExpression implements Expression {
 
     public SpecificFieldExpression(final Expression entityExpression, final Expression fieldExpression) {
         this.entityExpression = entityExpression;
-        this.fieldExpression = Optional.ofNullable(
-                (fieldExpression instanceof NoopExpression) ? null : fieldExpression);
+        this.fieldExpression = Optional.ofNullable(fieldExpression);
     }
 
     @Override
     public ExpressionResult evaluate() {
         if (!fieldExpression.isPresent()) {
-            if (entityExpression instanceof NoopExpression) {
-                return ExpressionResult.PASS;
-            }
-            return entityExpression.evaluate();
+            return (entityExpression == null) ? PASS : entityExpression.evaluate();
         }
         return fieldExpression.get().evaluate();
     }

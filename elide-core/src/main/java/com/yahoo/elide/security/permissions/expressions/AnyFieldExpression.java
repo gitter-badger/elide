@@ -7,6 +7,9 @@ package com.yahoo.elide.security.permissions.expressions;
 
 import com.yahoo.elide.security.permissions.ExpressionResult;
 
+import static com.yahoo.elide.security.permissions.ExpressionResult.FAIL;
+import static com.yahoo.elide.security.permissions.ExpressionResult.PASS;
+
 /**
  * Implementation of joining expression results by any field success or entity success.
  */
@@ -21,10 +24,10 @@ public class AnyFieldExpression implements Expression {
 
     @Override
     public ExpressionResult evaluate() {
-        ExpressionResult fieldResult = fieldExpression.evaluate();
+        ExpressionResult fieldResult = (fieldExpression == null) ? FAIL : fieldExpression.evaluate();
         if (fieldResult != ExpressionResult.FAIL) {
             return fieldResult;
         }
-        return (entityExpression instanceof NoopExpression) ? ExpressionResult.DEFERRED : entityExpression.evaluate();
+        return (entityExpression == null) ? PASS : entityExpression.evaluate();
     }
 }

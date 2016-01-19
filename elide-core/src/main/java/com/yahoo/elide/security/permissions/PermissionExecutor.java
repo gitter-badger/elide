@@ -9,6 +9,7 @@ import com.yahoo.elide.annotation.CreatePermission;
 import com.yahoo.elide.annotation.UpdatePermission;
 import com.yahoo.elide.audit.InvalidSyntaxException;
 import com.yahoo.elide.core.PersistentResource;
+import com.yahoo.elide.core.SecurityMode;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.security.ChangeSpec;
 import com.yahoo.elide.security.checks.Check;
@@ -17,7 +18,6 @@ import com.yahoo.elide.security.permissions.expressions.AndExpression;
 import com.yahoo.elide.security.permissions.expressions.AnyFieldExpression;
 import com.yahoo.elide.security.permissions.expressions.CommitCheckExpression;
 import com.yahoo.elide.security.permissions.expressions.Expression;
-import com.yahoo.elide.security.permissions.expressions.NoopExpression;
 import com.yahoo.elide.security.permissions.expressions.OperationCheckExpression;
 import com.yahoo.elide.security.permissions.expressions.OrExpression;
 import com.yahoo.elide.security.permissions.expressions.SpecificFieldExpression;
@@ -52,6 +52,9 @@ public class PermissionExecutor {
                                                                     final Class<A> annotationClass,
                                                                     final String field,
                                                                     final ChangeSpec changeSpec) {
+        if (resource.getRequestScope().getSecurityMode() == SecurityMode.BYPASS_SECURITY) {
+            return; // Bypass
+        }
         ExtractedChecks extracted = new ExtractedChecks(resource, annotationClass, field);
 
         Expression operationExpression =
@@ -67,6 +70,9 @@ public class PermissionExecutor {
     public <A extends Annotation> void checkAnyFieldPermission(final PersistentResource resource,
                                                                final Class<A> annotationClass,
                                                                final ChangeSpec changeSpec) {
+        if (resource.getRequestScope().getSecurityMode() == SecurityMode.BYPASS_SECURITY) {
+            return; // Bypass
+        }
         // TODO: Clean this up.
         List<String> fields = new ArrayList<>();
 
@@ -109,7 +115,7 @@ public class PermissionExecutor {
      */
     public void checkCommitPermissions() {
         commitCheckQueue.forEach((expr) -> {
-            if (expr.evaluate() == FAIL && !(expr instanceof NoopExpression)) {
+            if (expr.evaluate() == FAIL) {
                 throw new ForbiddenAccessException();
             }
         });
@@ -154,7 +160,7 @@ public class PermissionExecutor {
                                        final Function<Check, Expression> expressionBuilder,
                                        final BiFunction<Expression, Expression, Expression> expressionJoiner) {
         if (checks.size() == 0) {
-            return new NoopExpression();
+            return null;
         }
 
         try {

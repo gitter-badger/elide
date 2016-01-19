@@ -9,7 +9,6 @@ import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.security.ChangeSpec;
 import com.yahoo.elide.security.checks.Check;
 import com.yahoo.elide.security.checks.CommitCheck;
-import com.yahoo.elide.security.checks.OperationCheck;
 import com.yahoo.elide.security.permissions.ExpressionResult;
 
 import static com.yahoo.elide.security.permissions.ExpressionResult.DEFERRED;
@@ -32,7 +31,7 @@ public class CommitCheckExpression extends OperationCheckExpression {
 
     @Override
     public ExpressionResult evaluate() {
-        if (check instanceof CommitCheck && !(check instanceof OperationCheck)) {
+        if (check instanceof CommitCheck) {
             return DEFERRED;
         }
         return super.evaluate();

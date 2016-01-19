@@ -10,7 +10,6 @@ import com.yahoo.elide.security.ChangeSpec;
 import com.yahoo.elide.security.checks.Check;
 import com.yahoo.elide.security.permissions.ExpressionResult;
 
-import static com.yahoo.elide.security.permissions.ExpressionResult.DEFERRED;
 import static com.yahoo.elide.security.permissions.ExpressionResult.FAIL;
 import static com.yahoo.elide.security.permissions.ExpressionResult.PASS;
 
@@ -42,9 +41,6 @@ public class OperationCheckExpression implements Expression {
     @Override
     public ExpressionResult evaluate() {
         // TODO: Caching
-        if (check instanceof NoopExpression) {
-            return DEFERRED;
-        }
         return check.ok(resource.getObject(), resource.getRequestScope(), changeSpec) ? PASS : FAIL;
     }
 }

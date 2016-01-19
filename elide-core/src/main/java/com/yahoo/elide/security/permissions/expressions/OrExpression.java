@@ -32,7 +32,7 @@ public class OrExpression implements Expression {
     @Override
     public ExpressionResult evaluate() {
         ExpressionResult leftResult = left.evaluate();
-        ExpressionResult rightResult = (right instanceof NoopExpression) ? null : right.evaluate();
+        ExpressionResult rightResult = (right == null) ? leftResult : right.evaluate();
 
         if (leftResult == FAIL && (rightResult == FAIL || rightResult == null)) {
             return FAIL;
