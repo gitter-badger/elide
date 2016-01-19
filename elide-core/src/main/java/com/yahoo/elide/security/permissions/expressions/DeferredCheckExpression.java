@@ -11,12 +11,14 @@ import com.yahoo.elide.security.checks.Check;
 import com.yahoo.elide.security.checks.CommitCheck;
 import com.yahoo.elide.security.permissions.ExpressionResult;
 
+import java.util.Map;
+
 import static com.yahoo.elide.security.permissions.ExpressionResult.DEFERRED;
 
 /**
- * Expression for representing commit checks.
+ * Expression for only executing operation checks and skipping commit checks.
  */
-public class CommitCheckExpression extends OperationCheckExpression {
+public class DeferredCheckExpression extends ImmediateCheckExpression {
 
     /**
      * Constructor.
@@ -24,9 +26,13 @@ public class CommitCheckExpression extends OperationCheckExpression {
      * @param check Check
      * @param resource Persistent resource
      * @param changeSpec Change spec
+     * @param cache Cache
      */
-    public CommitCheckExpression(final Check check, final PersistentResource resource, final ChangeSpec changeSpec) {
-        super(check, resource, changeSpec);
+    public DeferredCheckExpression(final Check check,
+                                   final PersistentResource resource,
+                                   final ChangeSpec changeSpec,
+                                   final Map<Check, ExpressionResult> cache) {
+        super(check, resource, changeSpec, cache);
     }
 
     @Override

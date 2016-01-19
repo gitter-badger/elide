@@ -16,7 +16,6 @@ import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 
-import com.yahoo.elide.security.checks.Check;
 import com.yahoo.elide.security.checks.CommitCheck;
 import com.yahoo.elide.security.checks.OperationCheck;
 import example.NegativeIntegerUserCheck;
@@ -25,46 +24,9 @@ import org.testng.annotations.Test;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import java.lang.annotation.Annotation;
 import java.util.Optional;
 
 public class PermissionManagerTest {
-
-    @Test(expectedExceptions = {InvalidSyntaxException.class})
-    public void testBadCheckExtraction() {
-        // Non-permission annotation passed in
-        PermissionManager.extractChecks(Entity.class, new Entity() {
-            @Override
-            public String name() {
-                return null;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return null;
-            }
-        });
-    }
-
-    @Test(expectedExceptions = {InvalidSyntaxException.class})
-    public void testNoChecks() {
-        PermissionManager.extractChecks(UpdatePermission.class, new UpdatePermission() {
-            @Override
-            public Class<? extends Check>[] any() {
-                return new Class[]{};
-            }
-
-            @Override
-            public Class<? extends Check>[] all() {
-                return new Class[]{};
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return null;
-            }
-        });
-    }
 
     @Test
     public void testLoadUserChecks() {

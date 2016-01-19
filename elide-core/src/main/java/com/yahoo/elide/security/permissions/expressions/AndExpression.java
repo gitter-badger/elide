@@ -19,7 +19,7 @@ public class AndExpression implements Expression {
     private final Expression right;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param left Left expression
      * @param right Right expression
